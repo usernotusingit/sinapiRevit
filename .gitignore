@@ -1,0 +1,10 @@
+# raw inputs (large / proprietary — regenerate locally)
+SINAPI-2026-05-formato-xlsx.zip
+extracted/
+revit_model_summary.json
+# derived data (regenerate via parse scripts)
+data/
+# python
+.venv/
+__pycache__/
+*.pyc
