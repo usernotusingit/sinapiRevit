@@ -3,6 +3,14 @@
 Ties a Revit BIM quantity takeoff (`revit_model_summary.json`, project *CÂMARA MUNICIPAL*) to
 SINAPI 2026-05 unit costs to produce a cost estimate (orçamento) for **Minas Gerais (MG)**.
 
+## Esquema do projeto
+
+![Esqueleto do pipeline SINAPI × Revit](docs/esqueleto_projeto.png)
+
+Fonte editável: [`docs/esqueleto_projeto.excalidraw`](docs/esqueleto_projeto.excalidraw)
+(abrir em [excalidraw.com](https://excalidraw.com)). Regenerar com
+`python3 src/make_diagram_png.py` (PNG) e `python3 src/make_excalidraw.py` (fonte).
+
 ## Model (relational / star schema)
 
 There is **no natural key** between Revit and SINAPI (Revit type/material is authored free text;
