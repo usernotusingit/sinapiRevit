@@ -55,20 +55,19 @@ python3 src/coverage_report.py --uf MG --regime SD   # 5. coverage / confidence 
 `--regime` ∈ {SD = Sem Desoneração, CD = Com Desoneração, SE = Sem Encargos}. Switching regime
 changes only the costs, never the mapping.
 
-## Enable the determinism hook (per clone)
+## The determinism hook (auto-enabled)
 
 A pre-commit hook guards the project's core invariant: `crosswalk/revit_sinapi_map.csv` must always
-reproduce from source. Git doesn't activate committed hooks automatically, so enable it **once in
-each clone**:
+reproduce from source. Git won't activate a committed hook on clone (security), so instead
+`make regen` and `make verify` wire it up on first run — idempotently — via `core.hooksPath`. Since
+a fresh clone has to run `make regen` to produce the gitignored outputs anyway, the hook installs
+itself the first time you use the repo. To set it up explicitly: `make hooks` (or
+`git config core.hooksPath .githooks`).
 
-```bash
-git config core.hooksPath .githooks
-```
-
-Once enabled, any commit that stages `crosswalk/revit_sinapi_map.csv` runs the hash gate
+Once active, any commit that stages `crosswalk/revit_sinapi_map.csv` runs the hash gate
 (`tools/hash_gate.py`) and is rejected if the staged file doesn't rebuild from source. Commits that
 don't touch the crosswalk are not gated, and the hook auto-skips on machines without the raw inputs
-(`data/*.parquet`, `revit_model_summary.json`). Run it manually any time with `make verify`.
+(`data/*.parquet`, `revit_model_summary.json`). Run the gate manually any time with `make verify`.
 
 ## Matching logic (deterministic)
 
