@@ -25,10 +25,26 @@ fact_revit_quantity ┘                    │
                                  fact_sinapi_custo (uf, regime)  ──► fact_orcamento
 ```
 
-## Run order
+## Outputs are regenerated on demand
+
+The orçamento deliverables (`output/fact_orcamento_*.parquet`, `output/orcamento_*.xlsx`,
+`output/coverage_report_*.md`) are **gitignored** — they reproduce byte-for-byte from source, so
+they don't live in git. Rebuild them locally with the `Makefile`:
 
 ```bash
-python3 src/parse_sinapi.py            # 1. tidy SINAPI xlsx  -> data/*.parquet
+make regen     # crosswalk + all orçamentos/coverage (MG: SD CD SE) -> output/
+make verify    # assert everything reproduces deterministically (hash gate)
+make clean     # delete the regenerable outputs from output/
+```
+
+`make regen` assumes `data/*.parquet` (from `parse_sinapi.py`) and `revit_model_summary.json` are
+present locally; both are gitignored raw inputs. Override the matrix with `make regen UF=MG
+REGIMES="SD CD"`.
+
+## Run order (what `make regen` does, plus the one-time SINAPI parse)
+
+```bash
+python3 src/parse_sinapi.py            # 1. tidy SINAPI xlsx  -> data/*.parquet  (one-time per SINAPI month; not in `make regen`)
 python3 src/parse_revit.py             # 2. flatten Revit JSON -> data/dim_revit_type, fact_revit_quantity
 python3 src/build_crosswalk.py         # 3. unit-gate + grupo-anchor + thickness + fuzzy -> crosswalk CSV
 python3 src/apply_review.py            # 3b. frozen LLM-review overrides + explicit gaps (idempotent)
@@ -38,6 +54,10 @@ python3 src/coverage_report.py --uf MG --regime SD   # 5. coverage / confidence 
 
 `--regime` ∈ {SD = Sem Desoneração, CD = Com Desoneração, SE = Sem Encargos}. Switching regime
 changes only the costs, never the mapping.
+
+A pre-commit hook (`.githooks/pre-commit`, enable once with `git config core.hooksPath .githooks`)
+runs the hash gate when `crosswalk/revit_sinapi_map.csv` is staged, rejecting any change that
+doesn't reproduce from source.
 
 ## Matching logic (deterministic)
 
