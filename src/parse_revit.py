@@ -27,12 +27,18 @@ OUT = ROOT / "data"
 
 _DIVISORIA = ("divisória", "divisoria")
 _VIDRO     = ("vidro", "espelho")
+_CORTINA   = ("cortina",)          # curtain walls (pele de vidro) — glazed, not masonry
 _MEIO_FIO  = ("meio-fio",)
 
 # (group, chapter, json_path_to_types_array, quantity_field, sinapi_unit, optional row-filter)
 GROUP_SPECS = [
     # ── Vedações ──────────────────────────────────────────────────────────────────────
-    ("paredes_alvenaria",   "Vedações",        "wall_types",                    "total_area_m2",  "M2", None),
+    ("paredes_alvenaria",   "Vedações",        "wall_types",                    "total_area_m2",  "M2",
+        # exclude curtain-wall glazing (pele de vidro) — it is priced by vidro_fachada,
+        # not as masonry. Without this, the "Parede cortina - PELE DE VIDRO" wall_type
+        # leaks into alvenaria and is mis-priced as block masonry.
+        lambda t: not any(k in (t.get("type_name") or "").lower()
+                          for k in _VIDRO + _CORTINA)),
     ("divisoria_leve",      "Vedações",        "wall_finish_types",             "total_area_m2",  "M2",
         lambda t: any(k in (t.get("type_name") or "").lower() for k in _DIVISORIA)),
     # ── Acabamentos ───────────────────────────────────────────────────────────────────
@@ -63,11 +69,62 @@ GROUP_SPECS = [
 ]
 
 
+# Each GROUP_SPECS *_types array maps back to the element-level array that carries the
+# Revit element_id, so each priced type can list the concrete element IDs behind it (for
+# fact-checking the report against revit_model_summary.json).
+_TYPES_TO_ELEMENTS = {
+    "wall_types":                  "walls",
+    "wall_finish_types":           "wall_finish_surfaces",
+    "floor_surface_types":         "floor_surfaces",
+    "floor_layer_types":           "floor_surfaces",   # layers share the parent floor element ids
+    "ceiling_surface_types":       "ceiling_surfaces",
+    "roof_types":                  "roof_elements",
+    "roof_drainage_element_types": "roof_drainage_elements",
+    "door_types":                  "doors",
+    "window_types":                "windows",
+    "plumbing_fixture_types":      "plumbing_fixtures",
+    "stairs_and_ramp_types":       "stairs_and_ramps",
+    "railing_types":               "railing_elements",
+    "site_enclosures.types":       "site_enclosures.items",
+}
+
+
 def _resolve(doc, path):
     node = doc
     for part in path.split("."):
         node = node.get(part, {}) if isinstance(node, dict) else {}
     return node if isinstance(node, list) else []
+
+
+def _element_ids_index(doc):
+    """For each element source, index element_id by (type_name, element_role) and by type_name.
+    The role-aware key disambiguates fixtures sharing a type_name; the type_name-only key is the
+    fallback when a *_type carries no role but its elements do (e.g. drenagem calhas)."""
+    idx = {}
+    for elem_path in set(_TYPES_TO_ELEMENTS.values()):
+        by_tr, by_t = defaultdict(set), defaultdict(set)
+        for e in _resolve(doc, elem_path):
+            if not isinstance(e, dict):
+                continue
+            eid = e.get("element_id")
+            if eid is None:
+                continue
+            tn   = (e.get("type_name")    or "").strip()
+            role = (e.get("element_role") or "").strip()
+            by_tr[(tn, role)].add(eid)
+            by_t[tn].add(eid)
+        idx[elem_path] = (by_tr, by_t)
+    return idx
+
+
+def _ids_for(idx, types_path, type_name, role):
+    """Element ids for a type: prefer the (type_name, role) match, fall back to type_name."""
+    elem_path = _TYPES_TO_ELEMENTS.get(types_path)
+    if elem_path not in idx:
+        return []
+    by_tr, by_t = idx[elem_path]
+    ids = by_tr.get((type_name, role)) or by_t.get(type_name, set())
+    return sorted(ids, key=str)  # sort by str for deterministic output regardless of id type
 
 
 def _thickness_by_type(doc):
@@ -143,6 +200,7 @@ def main():
     print(f"Project: {doc['project']['name']}")
     thickness_by_type        = _thickness_by_type(doc)
     finish_thickness_by_type = _finish_thickness_by_type(doc)
+    id_index                 = _element_ids_index(doc)
 
     # Inject derived layer aggregate so GROUP_SPECS can reference it via _resolve
     doc["floor_layer_types"] = _floor_layer_types(doc)
@@ -181,11 +239,14 @@ def main():
             else:
                 thickness_m = None
 
+            elem_ids = _ids_for(id_index, path, type_name, role)
             dim_rows.append({
                 "revit_type_key": key, "group": group, "chapter": chapter,
                 "family_name": family, "type_name": type_name, "material": material,
                 "element_role": role, "base_unit": unit, "text_norm": normalize(text),
                 "thickness_m": thickness_m,
+                "revit_element_ids": ",".join(str(i) for i in elem_ids),
+                "revit_n_elements": len(elem_ids),
             })
             fact_rows.append({
                 "revit_type_key": key, "quantity": qty, "unit": unit,

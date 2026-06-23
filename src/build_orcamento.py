@@ -30,12 +30,15 @@ WITH q AS (SELECT * FROM read_parquet($qty)),
      custo AS (SELECT codigo, custo_rs, pct_as FROM read_parquet($custo)
                WHERE uf = $uf AND regime = $regime),
      comp AS (SELECT codigo, descricao, grupo FROM read_parquet($comp)),
-     rev AS (SELECT revit_type_key, "group" AS grp, chapter, type_name, material FROM read_parquet($rev))
+     rev AS (SELECT revit_type_key, "group" AS grp, chapter, type_name, material,
+                    revit_n_elements, revit_element_ids FROM read_parquet($rev))
 SELECT
     cw.chapter,
     cw."group" AS group,
     rev.type_name,
     rev.material,
+    rev.revit_n_elements,
+    rev.revit_element_ids,
     q.quantity,
     q.unit,
     q.quantity_status,

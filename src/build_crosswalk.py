@@ -100,6 +100,13 @@ def main():
     comp["desc_norm"] = comp["descricao"].map(normalize)
     comp["unidade"]   = comp["unidade"].astype(str).str.upper().str.strip()
 
+    # General rule (spec 6.1): never match re-installation services ("recolocação"); they
+    # are repair/reuse items, never wanted in a new-construction preliminary orçamento.
+    n_recoloca = comp["desc_norm"].str.contains("RECOLOCA", regex=False).sum()
+    comp = comp[~comp["desc_norm"].str.contains("RECOLOCA", regex=False)].reset_index(drop=True)
+    if n_recoloca:
+        print(f"excluded {n_recoloca} 'recolocação' composições from the candidate pool")
+
     rows = []
     for r in rev.itertuples(index=False):
         grupos, has_rule = allowed_grupos(r)
