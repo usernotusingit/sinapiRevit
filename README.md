@@ -55,9 +55,20 @@ python3 src/coverage_report.py --uf MG --regime SD   # 5. coverage / confidence 
 `--regime` ∈ {SD = Sem Desoneração, CD = Com Desoneração, SE = Sem Encargos}. Switching regime
 changes only the costs, never the mapping.
 
-A pre-commit hook (`.githooks/pre-commit`, enable once with `git config core.hooksPath .githooks`)
-runs the hash gate when `crosswalk/revit_sinapi_map.csv` is staged, rejecting any change that
-doesn't reproduce from source.
+## Enable the determinism hook (per clone)
+
+A pre-commit hook guards the project's core invariant: `crosswalk/revit_sinapi_map.csv` must always
+reproduce from source. Git doesn't activate committed hooks automatically, so enable it **once in
+each clone**:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Once enabled, any commit that stages `crosswalk/revit_sinapi_map.csv` runs the hash gate
+(`tools/hash_gate.py`) and is rejected if the staged file doesn't rebuild from source. Commits that
+don't touch the crosswalk are not gated, and the hook auto-skips on machines without the raw inputs
+(`data/*.parquet`, `revit_model_summary.json`). Run it manually any time with `make verify`.
 
 ## Matching logic (deterministic)
 
