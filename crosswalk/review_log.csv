@@ -1,4 +1,6 @@
 group,revit_text,role,from_codigo,to_codigo,confidence,note
+divisoria_leve,Parede básica - int - DIVISÓRIA NAVAL          (3) | DIVISÓRIA NAVAL,,102235,,gap,naval/laminate partition — SINAPI PVC/MDF divisórias unpriced in MG 2026-05; price manually
+divisoria_leve,Parede básica - int - DIVISÓRIA NAVAL          (5) | DIVISÓRIA NAVAL,,102235,,gap,naval/laminate partition — SINAPI PVC/MDF divisórias unpriced in MG 2026-05; price manually
 parede_revestimento,Parede básica - int - CERÂMICO          (AZULEJO / AZULEJO) (15) | CERÂMICA 60 x 30 cm BRANCO,,104617,87265.0,high,azulejo wall tiling -> revest. cerâmico interno esmaltado
 parede_revestimento,Parede básica - int - CERÂMICO          (AZULEJO / AZULEJO) (25) | CERÂMICA 60 x 30 cm BRANCO,,104617,87265.0,high,azulejo wall tiling -> revest. cerâmico interno esmaltado
 parede_revestimento,Parede básica - int - CERÂMICO          (CARPETE AZUL / -----) (15) | PISO EM CARPETE AZUL ESCURO,,104617,104641.0,low,ambiguous wall finish -> economic latex paint
@@ -6,42 +8,47 @@ parede_revestimento,Parede básica - int - CERÂMICO          (TINTA / TINTA) (1
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA / TINTA) (25) | EMBOÇO,,95305,104642.0,high,painted wall -> pintura látex acrílica 2 demãos
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA EPÓXI / AZULEJO) (15) | PINTURA EPÓXI,,104642,104642.0,medium,epoxy paint -> latex acrílica standard (proxy)
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA EPÓXI / TINTA INTERNA) (15) | PINTURA EPÓXI,,104642,104642.0,medium,epoxy paint -> latex acrílica standard (proxy)
-parede_revestimento,"Parede básica - int - DRY WALL + LÃ DE ROCHA          (TINTA / TINTA) (9) | PLACAS DE GESSO ACARTONADO TIPO ST (E = 12,5 mm)",,95626,104642.0,high,painted wall -> pintura látex acrílica 2 demãos
-piso_interno,"Piso - Cerâmica antiderrapante, PEI IV | ceramica 40x40",,98683,87249.0,high,ceramic floor 40x40 -> piso cerâmico esmaltado 45x45
-piso_interno,"Piso - int - Porcelanato polido, PEI ≥ IV, retificado 90x90 | PISO EM PORCELLANATO BRANCO 90 X 90",,98676,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
-piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (4) | PISO EM PORCELLANATO BRANCO 90 X 90,,98683,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
-piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (5) | PISO EM PORCELLANATO BRANCO 90 X 90,,98683,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
-piso_interno,Piso - Porcelanato esmaltado acetinado | PISO EM PORCELLANATO BRANCO 90 X 90,,98676,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
+parede_revestimento,Parede empilhada - int - CERÂMICO          (ATÉ 300 DE ALTURA) (AZULEJO/ AZULEJO) (15) - int - CERÂMICO          (AZULEJO / (TINTA INTERNA) (15) 2,,95305,104642.0,high,painted wall -> pintura látex acrílica 2 demãos
+piso_interno,"Piso - Cerâmica antiderrapante, PEI IV | ceramica 40x40",,98671,87249.0,high,ceramic floor 40x40 -> piso cerâmico esmaltado 45x45
+piso_interno,Piso - int - BANCADA EM GRANITO MODELO MÁRMORE TRAVERTINO (3) | BANCADA EM GRANITO MODELO MÁRMORE TRAVERTINO POLIDO,,98672,,gap,granite countertop modeled as floor — price as bancada (louças/metais) manually
+piso_interno,"Piso - int - Porcelanato polido, PEI ≥ IV, retificado 90x90 | PISO EM PORCELLANATO BRANCO 90 X 90",,98671,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
+piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (4) | PISO EM PORCELLANATO BRANCO 90 X 90,,98671,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
+piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (5) | PISO EM PORCELLANATO BRANCO 90 X 90,,98671,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
+piso_interno,Piso - Porcelanato esmaltado acetinado | PISO EM PORCELLANATO BRANCO 90 X 90,,98671,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
 forro,Forro composto - FORRO DE GESSO LISO | PINTURA PVA,,99054,96113.0,high,"gypsum-board ceiling -> forro em placas de gesso, comercial"
 forro,Forro composto - LAJE (15) | CONCRETO PRÉ-MOLDADO,,99054,,gap,exposed slab — no suspended ceiling; price teto/pintura manually
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 150 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 200 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 220 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 3 FOLHAS - 200 X 220,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 280 x 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 320 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 370 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 485 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
-porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 500 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+drenagem,Calha | CALHA | ZINCO,gutter,94227,94227.0,high,"gutter -> calha em chapa de aço galvanizado nº24, desenvolvimento 33 cm"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 150 X 210,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 200 X 210,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 220 X 210,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 3 FOLHAS - 200 X 220,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 280 x 210,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 320 x 300,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 370 x 300,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 485 x 300,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 500 x 300,,94805,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
 porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 250 x 220,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
 porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 400 x 295,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
 porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 670,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
 porta,PORTÃO DE METAL,,100703,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
-janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 100,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
-janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 101,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
-janela,ÓCULO RETANGULAR COM ESQUADRIA - 250 x 125,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
-janela,ÓCULO RETANGULAR COM ESQUADRIA - 60 x 100,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
-louca_sanitaria,BRANCO GELO,toilet,95471,86931.0,high,toilet -> bacia sanitária c/ caixa acoplada louça branca
-louca_sanitaria,P.13 BRANCO GELO GE17,toilet,100849,86931.0,high,toilet -> bacia sanitária c/ caixa acoplada louça branca
-louca_sanitaria,PROF = 40,sink,86900,86900.0,low,generic sink -> cuba inox (proxy)
-louca_sanitaria,PROF = 40,sink,86900,86900.0,low,generic sink -> cuba inox (proxy)
-louca_sanitaria,BRANCO GELO,sink,86872,86902.0,high,washbasin -> lavatório louça branca c/ coluna
-louca_sanitaria,L83C (410 x 410),sink,86900,86900.0,medium,square louça cuba -> cuba de embutir (proxy)
-louca_sanitaria,L83C (410 x 410),sink,86900,86900.0,medium,square louça cuba -> cuba de embutir (proxy)
-louca_sanitaria,INOX 50 x 44 cm,sink,93442,86900.0,high,stainless sink -> cuba inox de embutir
-louca_sanitaria,_Produtos_Arq_Bib_Urinoir,urinal,100853,100858.0,high,urinal -> mictório sifonado c/ válvula descarga
-louca_sanitaria,BRANCO GELO,sink,86872,86902.0,high,washbasin -> lavatório louça branca c/ coluna
-guarda_corpo,Commercial - Glass w Fixings,guardrail,99842,99846.0,medium,glass/panoramic guardrail -> guarda-corpo panorâmico
-fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO 2,,98523,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
-fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO,,98523,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
+janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 100,,100674,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
+janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 101,,100674,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
+janela,ÓCULO RETANGULAR COM ESQUADRIA - 250 x 125,,100674,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
+janela,ÓCULO RETANGULAR COM ESQUADRIA - 60 x 100,,100674,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
+louca_sanitaria,ASSENTO DE BACIA SANITÁRIA (COMPARTILHADO) | BRANCO GELO,toilet,95471,86931.0,high,toilet -> bacia sanitária c/ caixa acoplada louça branca
+louca_sanitaria,BACIA SANITÁRIA CONVENCIONAL - DECA LINHA NUOVA P.13 | P.13 BRANCO GELO GE17,toilet,100849,86931.0,high,toilet -> bacia sanitária c/ caixa acoplada louça branca
+louca_sanitaria,BANCADA LINEAR COM DUAS CUBAS DE SEMI-ENCAIXE RETANGULAR | PROF = 40,sink,86900,86900.0,low,generic sink -> cuba inox (proxy)
+louca_sanitaria,BANCADA LINEAR COM UMA CUBA DE SEMI-ENCAIXE RETANGULAR | PROF = 40,sink,86900,86900.0,low,generic sink -> cuba inox (proxy)
+louca_sanitaria,BARRA DE APOIO DECA CONFORTO - TIPO LINEAR | ESCOVADO,unknown,100863,100863.0,high,grab bar -> barra de apoio em L inox 70x70
+louca_sanitaria,COLUNA PARA TANQUE (COMPARTILHADO) | BRANCO GELO,sink,86872,86872.0,high,laundry tank -> tanque de louça branca c/ coluna 30l
+louca_sanitaria,CUBA DE SEMI-ENCAIXE  RETANGULAR COM MESA (1) (COMPARTILHADO) | L83C (410 x 410),sink,86900,86900.0,medium,square louça cuba -> cuba de embutir (proxy)
+louca_sanitaria,CUBA DE SEMI-ENCAIXE  RETANGULAR COM MESA (2) (COMPARTILHADO) | L83C (410 x 410),sink,86900,86900.0,medium,square louça cuba -> cuba de embutir (proxy)
+louca_sanitaria,CUBA SIMPLES RETANGULAR PARA PIA DE COZINHA OU SEMELHANTE | INOX 50 x 44 cm,sink,93442,86900.0,high,stainless sink -> cuba inox de embutir retangular
+louca_sanitaria,MICTÓRIO INDIVIDUAL SINFONADO | _Produtos_Arq_Bib_Urinoir,urinal,100853,100858.0,high,urinal -> mictório sifonado c/ válvula descarga
+louca_sanitaria,TANQUE SIMPLES COM COLUNA - 18 LITROS | BRANCO GELO,sink,86872,86872.0,high,laundry tank -> tanque de louça branca c/ coluna 30l
+guarda_corpo,Guarda-corpo | Commercial - Glass w Fixings,guardrail,99842,99846.0,medium,glass/panoramic guardrail -> guarda-corpo panorâmico
+guarda_corpo,Guarda-corpo | GRADIL V 200 01 PORTÃO 2,guardrail,99842,,gap,"gate within a railing run — price gate separately, not as guarda-corpo"
+guarda_corpo,Guarda-corpo | GRADIL V 200 01 PORTÃO,guardrail,99842,,gap,"gate within a railing run — price gate separately, not as guarda-corpo"
+fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO 2,,98522,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
+fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO,,98522,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
 fechamento_lote,PORTÃO DE METAL,,101205,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"

@@ -34,8 +34,14 @@ def review(group, text, role):
         if "CARPETE" in t:         return (104641, "low", "ambiguous wall finish -> economic latex paint")
         return None
     if group == "piso_interno":
+        if "BANCADA" in t: return (None, "gap", "granite countertop modeled as floor — price as bancada (louças/metais) manually")
         if "PORCEL" in t or "90 X 90" in t or "90X90" in t: return (87261, "high", "porcelain floor -> revest. cerâmico piso porcelanato")
         if "CERÂMIC" in t or "CERAMIC" in t: return (87249, "high", "ceramic floor 40x40 -> piso cerâmico esmaltado 45x45")
+        return None
+    if group == "divisoria_leve":
+        # granite/marble sanitary divisórias are priced (fuzzy -> 102253/102254); only the
+        # PVC/MDF "naval" panels are unpriced in this SINAPI month, so gap them explicitly.
+        if "NAVAL" in t: return (None, "gap", "naval/laminate partition — SINAPI PVC/MDF divisórias unpriced in MG 2026-05; price manually")
         return None
     if group == "forro":
         if "GESSO" in t:           return (96113, "high", "gypsum-board ceiling -> forro em placas de gesso, comercial")
@@ -45,7 +51,8 @@ def review(group, text, role):
         if "ÓCULO" in t or "OCULO" in t: return (100674, "high", "fixed light (óculo) -> caixilho fixo de alumínio p/ vidro")
         return None
     if group == "drenagem":
-        return (None, "gap", "roof gutter (calha) — no SINAPI composição in 2026-05; price sheet-metal gutter manually")
+        if "CALHA" in t: return (94227, "high", "gutter -> calha em chapa de aço galvanizado nº24, desenvolvimento 33 cm")
+        return (None, "gap", "roof drainage element — no SINAPI composição in 2026-05; price manually")
     if group in ("porta", "fechamento_lote"):
         if "PORTÃO" in t or "PORTAO" in t:
             return (None, "gap", "metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually")
@@ -53,15 +60,21 @@ def review(group, text, role):
             return (None, "gap", "glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually")
         return None
     if group == "guarda_corpo":
+        if "PORTÃO" in t or "PORTAO" in t: return (None, "gap", "gate within a railing run — price gate separately, not as guarda-corpo")
         if "GLASS" in t or "VIDRO" in t: return (99846, "medium", "glass/panoramic guardrail -> guarda-corpo panorâmico")
         return None
     if group == "louca_sanitaria":
-        if role == "toilet":  return (86931, "high", "toilet -> bacia sanitária c/ caixa acoplada louça branca")
-        if role == "urinal":  return (100858, "high", "urinal -> mictório sifonado c/ válvula descarga")
-        if role == "sink":
-            if "INOX" in t:                 return (86900, "high", "stainless sink -> cuba inox de embutir")
-            if "L83C" in t or "410" in t:   return (86900, "medium", "square louça cuba -> cuba de embutir (proxy)")
-            if "BRANCO GELO" in t:          return (86902, "high", "washbasin -> lavatório louça branca c/ coluna")
+        # Key on the fixture identity (now carried in revit_text via family_name); role is the
+        # fallback. This resolves the "incluir id" rows whose type_name is only a colour/finish.
+        if "BARRA DE APOIO" in t:               return (100863, "high", "grab bar -> barra de apoio em L inox 70x70")
+        if "MICTOR" in t or role == "urinal":   return (100858, "high", "urinal -> mictório sifonado c/ válvula descarga")
+        if "BACIA" in t or "ASSENTO" in t or role == "toilet":
+                                                return (86931, "high", "toilet -> bacia sanitária c/ caixa acoplada louça branca")
+        if "TANQUE" in t:                       return (86872, "high", "laundry tank -> tanque de louça branca c/ coluna 30l")
+        if role == "sink" or any(k in t for k in ("CUBA", "BANCADA", "LAVAT", "COLUNA")):
+            if "INOX" in t:                     return (86900, "high", "stainless sink -> cuba inox de embutir retangular")
+            if "L83C" in t or "410" in t:       return (86900, "medium", "square louça cuba -> cuba de embutir (proxy)")
+            if "BRANCO GELO" in t:              return (86902, "high", "washbasin -> lavatório louça branca c/ coluna")
             return (86900, "low", "generic sink -> cuba inox (proxy)")
         return None
     return None
@@ -71,11 +84,12 @@ def main():
     cw = pd.read_csv(CW)
     comp = pd.read_parquet(ROOT / "data" / "dim_sinapi_composicao.parquet").set_index("codigo")
 
-    # Always evaluate louca_sanitaria (role-based) and porta/fechamento_lote (gate/glass-door
-    # routing fires on PORTÃO/VIDRO regardless of fuzzy confidence); review() returns None and
-    # leaves normal doors untouched.
+    # Always evaluate the groups whose deterministic routing must fire regardless of fuzzy
+    # confidence (gate/glass-door/gutter/naval/bancada routing, louça id lookup). review()
+    # returns None for rows it does not intend to touch, leaving normal matches untouched.
     target = cw.confidence.isin(["low", "none"]) | cw.group.isin(
-        ["louca_sanitaria", "porta", "fechamento_lote"])
+        ["louca_sanitaria", "porta", "fechamento_lote",
+         "divisoria_leve", "guarda_corpo", "piso_interno", "drenagem"])
     logs, changed = [], 0
     for i, r in cw[target].iterrows():
         dec = review(r.group, r.revit_text, str(r.element_role))

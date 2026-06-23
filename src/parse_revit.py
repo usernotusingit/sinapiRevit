@@ -29,22 +29,30 @@ _DIVISORIA = ("divisória", "divisoria")
 _VIDRO     = ("vidro", "espelho")
 _CORTINA   = ("cortina",)          # curtain walls (pele de vidro) — glazed, not masonry
 _MEIO_FIO  = ("meio-fio",)
+_DRYWALL   = ("dry wall", "drywall")   # plasterboard partition — not block masonry
 
 # (group, chapter, json_path_to_types_array, quantity_field, sinapi_unit, optional row-filter)
 GROUP_SPECS = [
     # ── Vedações ──────────────────────────────────────────────────────────────────────
     ("paredes_alvenaria",   "Vedações",        "wall_types",                    "total_area_m2",  "M2",
-        # exclude curtain-wall glazing (pele de vidro) — it is priced by vidro_fachada,
-        # not as masonry. Without this, the "Parede cortina - PELE DE VIDRO" wall_type
-        # leaks into alvenaria and is mis-priced as block masonry.
+        # The wall_types array carries the structural vedação body. Exclude every type that is
+        # NOT block masonry, so it is not mis-priced as alvenaria (each leaks here because the
+        # same type_name also appears in wall_finish_types where its real group lives):
+        #   - vidro/cortina (pele de vidro)  -> vidro_fachada
+        #   - divisória (granito/naval/etc.) -> divisoria_leve  (else double-counted: body+panel)
+        #   - dry wall                       -> divisoria_leve  (plasterboard, not blocks)
+        #   - meio-fio                       -> dropped (curb modeled as wall; modeling artifact)
         lambda t: not any(k in (t.get("type_name") or "").lower()
-                          for k in _VIDRO + _CORTINA)),
+                          for k in _VIDRO + _CORTINA + _DIVISORIA + _DRYWALL + _MEIO_FIO)),
     ("divisoria_leve",      "Vedações",        "wall_finish_types",             "total_area_m2",  "M2",
-        lambda t: any(k in (t.get("type_name") or "").lower() for k in _DIVISORIA)),
+        lambda t: any(k in (t.get("type_name") or "").lower() for k in _DIVISORIA + _DRYWALL)),
     # ── Acabamentos ───────────────────────────────────────────────────────────────────
     ("parede_revestimento", "Acabamentos",     "wall_finish_types",             "total_area_m2",  "M2",
+        # divisória/dry wall are priced as a whole partition system by divisoria_leve (which
+        # already includes the board finish), so keep them out of the paint/tile finish group
+        # to avoid double-listing the same wall_finish_types entry.
         lambda t: not any(k in (t.get("type_name") or "").lower()
-                          for k in _DIVISORIA + _VIDRO + _MEIO_FIO)),
+                          for k in _DIVISORIA + _DRYWALL + _VIDRO + _MEIO_FIO)),
     ("piso_interno",        "Acabamentos",     "floor_surface_types",           "total_area_m2",  "M2",
         lambda t: t.get("floor_scope") == "internal_floor_finish"),
     ("contrapiso",          "Acabamentos",     "floor_layer_types",             "total_area_m2",  "M2",

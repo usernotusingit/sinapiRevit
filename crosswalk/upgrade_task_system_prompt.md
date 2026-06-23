@@ -35,20 +35,22 @@ IN SCOPE (this upgrade): improving the 1->1 match — grupo routing, thickness/o
 OUT OF SCOPE (do NOT start now): the EAP 1->many service decomposition (conceptual_gaps.md sec H) — expanding one element into a bill of services, per-service conversion factors, and structural (estrutural EAP) extraction. These change the crosswalk's output cardinality and are a separate redesign; leave them documented, untouched.
 
 ## 4. PRIORITIZED BACKLOG (cross-referenced: secondactreview observacoes x conceptual_gaps)
-P0 - BUG (rule should fire but doesn't):
-  - Pele de vidro not identified despite the rule (rows 56, 144). The wall_finish_types filter isn't catching 'Parede cortina - PELE DE VIDRO'; it leaks into paredes_alvenaria/parede_revestimento instead of routing to vidro_fachada. Fix the GROUP_SPECS filter / vidro detection.
-P1 - CONFIG-TUNABLE (review() / GROUP_RULES / revestimento_grupos; no new extraction):
-  - Doors -> nearest size up when no exact dimension (106-113).
-  - Glass doors not in esquadrias-porta (117-125); portao routes to Cercas/alambrados (68-70,73,74,126).
-  - Divisoria material routing (49-51, 145, 154, 183); exclude 'recolocacao' services (114-116).
-  - Janela: prioritize opening type then number of leaves (88, 98, 105); ignore windows without glass included (81, 83, 85-87); diagnose weak fuzzy matches flagged 'item muito diferente' (82, 92).
-P2 - NEW EXTRACTION / CALC (touches GROUP_SPECS + the model; bigger):
+DONE (2026-06-23, issue #1 "listed_changes" — all P0 + P1 items, encoded as deterministic design-time rules; determinism re-asserted, hash gate green):
+  - [P0] Pele de vidro routing — RESOLVED earlier; verified curtain wall now routes to vidro_fachada (FACHADA CORTINA EM VIDRO), excluded from paredes_alvenaria + parede_revestimento.
+  - [P1] Door nearest-size — `build_crosswalk.door_width()` parses the Revit WxH and snaps to the nearest catalogued SINAPI width {60,70,80,90,100}×210, anchored on the RAW descrição (normalize() strips dimensions, so desc_norm is size-blind). method=`rule+dim`.
+  - [P1] Glass doors / portão — review() routes porta+VIDRO and porta/fechamento/guarda_corpo+PORTÃO to `gap` (price manually); not forced onto a wood/guardrail composição.
+  - [P1] Divisória / dry wall — parse_revit excludes `_DIVISORIA`+`_DRYWALL`+`_MEIO_FIO` from paredes_alvenaria (was double-counted as block masonry + panel); divisória/drywall priced once via divisoria_leve. review() gaps unpriced NAVAL (PVC/MDF panels have no 2026-05 cost); meio-fio dropped entirely (modeling artifact).
+  - [P1] Janela opening-then-leaves — `janela_opening()` anchors on opening type first (MAXIM/BASCULANT/FIXO/CORRER; pivotante→FIXO as there is no SINAPI pivotante), then prefers glass-included variants (drops "VIDROS NÃO INCLUSOS"), then narrows by leaf count. Resolves "item muito diferente" (fixa/pivotante no longer matched to 3-leaf corrediça).
+  - [P1] Recolocação — already excluded from the candidate pool (build_crosswalk).
+  - [general] Never-priced filter — build_crosswalk drops the ~20% of composições SINAPI never prices (custo_rs=0 in every uf/regime), so the fuzzy step can't prefer an unpriced near-synonym (was sending PVC windows / drywall isolamento to R$0).
+  - [P2-partial] Louça id refinement — review() now keys on the fixture identity (family_name surfaced into revit_text): BARRA DE APOIO→100863, TANQUE→86872, BACIA→86931, MICTÓRIO→100858, cuba/lavatório by material; calha→94227.
+P2 - NEW EXTRACTION / CALC (touches GROUP_SPECS + the model; bigger — STILL OPEN):
   - Contrapiso priced per m3 not m2 (unit mismatch, conceptual_gaps B).
   - Roof slope: adjusted area = plan area / cos(slope); extract slope (conceptual_gaps B/D).
-  - Louca element id refinement (127-137).
   - New single-match groups still absent: vergas/contravergas (5.3), encunhamento (5.4), rodape/soleira/peitoril (8.4); forro perimeter (8.3); opening-area reduction on walls (5.1).
+  - Guarda-corpo height: no Revit height attribute, so the 1,10 m vs other-height composição cannot be chosen ("altura gradil"); needs an extracted height. Glass guardrail 99846 is R$0 in MG/CD specifically (data gap, not a routing bug).
 P3 - GOVERNANCE (largest, defer unless asked): source-classification sec4, tipologia input, muro de arrimo inclusion+guard.
-UPSTREAM (not a crosswalk fix): modeling errors go back to the Revit author — LAJE as forro (6), bancada as piso (62), PVC forro (4), divisoria granito (154), drywall as alvenaria (159).
+UPSTREAM (not a crosswalk fix): genuine modeling errors still belong to the Revit author, but are now surfaced as `gap` rather than mis-priced — LAJE as forro (6), bancada as piso (62, review() gaps it), PVC forro (4).
 
 ## 5. CHANGE WORKFLOW (per item)
 1. Name the exact stage/gate touched: SINAPI parsing, Revit extraction (GROUP_SPECS), unit gate, grupo anchor (GROUP_RULES / revestimento_grupos), thickness/opening anchor, fuzzy threshold, review() decision, or costing.
