@@ -6,15 +6,7 @@ parede_revestimento,Parede básica - int - CERÂMICO          (TINTA / TINTA) (1
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA / TINTA) (25) | EMBOÇO,,95305,104642.0,high,painted wall -> pintura látex acrílica 2 demãos
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA EPÓXI / AZULEJO) (15) | PINTURA EPÓXI,,104642,104642.0,medium,epoxy paint -> latex acrílica standard (proxy)
 parede_revestimento,Parede básica - int - CERÂMICO          (TINTA EPÓXI / TINTA INTERNA) (15) | PINTURA EPÓXI,,104642,104642.0,medium,epoxy paint -> latex acrílica standard (proxy)
-parede_revestimento,Parede básica - int - DIVISÓRIA DE GRANITO          (3) | GRANITO POLIDO PRETO (E = 3 cm),,88415,,gap,granite partition — not a paint finish; price manually
-parede_revestimento,Parede básica - int - DIVISÓRIA NAVAL          (3) | DIVISÓRIA NAVAL,,95305,,gap,prefab partition panel — price manually
-parede_revestimento,Parede básica - int - DIVISÓRIA NAVAL          (5) | DIVISÓRIA NAVAL,,95305,,gap,prefab partition panel — price manually
 parede_revestimento,"Parede básica - int - DRY WALL + LÃ DE ROCHA          (TINTA / TINTA) (9) | PLACAS DE GESSO ACARTONADO TIPO ST (E = 12,5 mm)",,95626,104642.0,high,painted wall -> pintura látex acrílica 2 demãos
-parede_revestimento,Parede básica - int - MEIO-FIO (10) | CONCRETO PRÉ-MOLDADO,,104638,,gap,curb modeled as wall — exclude from wall finish
-parede_revestimento,Parede básica - int - MEIO-FIO (15) | CONCRETO PRÉ-MOLDADO,,104638,,gap,curb modeled as wall — exclude from wall finish
-parede_revestimento,Parede básica - int - MEIO-FIO (30) | CONCRETO PRÉ-MOLDADO,,104638,,gap,curb modeled as wall — exclude from wall finish
-parede_revestimento,Parede básica - int - MEIO-FIO (6) | CONCRETO PRÉ-MOLDADO,,104638,,gap,curb modeled as wall — exclude from wall finish
-parede_revestimento,"Parede cortina - PELE DE VIDRO (---, COM MONTANTES) x (---, COM MONTANTES)",,104646,,gap,curtain-wall glazing — price as fachada/vidros manually
 piso_interno,"Piso - Cerâmica antiderrapante, PEI IV | ceramica 40x40",,98683,87249.0,high,ceramic floor 40x40 -> piso cerâmico esmaltado 45x45
 piso_interno,"Piso - int - Porcelanato polido, PEI ≥ IV, retificado 90x90 | PISO EM PORCELLANATO BRANCO 90 X 90",,98676,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
 piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (4) | PISO EM PORCELLANATO BRANCO 90 X 90,,98683,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
@@ -22,7 +14,18 @@ piso_interno,Piso - int - PORCELLANATO BRANCO 90 X 90 (5) | PISO EM PORCELLANATO
 piso_interno,Piso - Porcelanato esmaltado acetinado | PISO EM PORCELLANATO BRANCO 90 X 90,,98676,87261.0,high,porcelain floor -> revest. cerâmico piso porcelanato
 forro,Forro composto - FORRO DE GESSO LISO | PINTURA PVA,,99054,96113.0,high,"gypsum-board ceiling -> forro em placas de gesso, comercial"
 forro,Forro composto - LAJE (15) | CONCRETO PRÉ-MOLDADO,,99054,,gap,exposed slab — no suspended ceiling; price teto/pintura manually
-drenagem,CALHA | ZINCO,gutter,89508,,gap,roof gutter (calha) — no SINAPI composição in 2026-05; price sheet-metal gutter manually
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 150 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 200 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 2 FOLHAS - 220 X 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 3 FOLHAS - 200 X 220,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 280 x 210,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 320 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 370 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 485 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO COM ESQUADRIA DE CORRER - 4 FOLHAS - 500 x 300,,106148,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 250 x 220,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 400 x 295,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
+porta,PORTA DE VIDRO DE CORRER - 4 FOLHAS - 670,,100700,,gap,"glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually"
 porta,PORTÃO DE METAL,,100703,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
 janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 100,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
 janela,ÓCULO RETANGULAR COM ESQUADRIA - 100 x 101,,105810,100674.0,high,fixed light (óculo) -> caixilho fixo de alumínio p/ vidro
@@ -39,4 +42,6 @@ louca_sanitaria,INOX 50 x 44 cm,sink,93442,86900.0,high,stainless sink -> cuba i
 louca_sanitaria,_Produtos_Arq_Bib_Urinoir,urinal,100853,100858.0,high,urinal -> mictório sifonado c/ válvula descarga
 louca_sanitaria,BRANCO GELO,sink,86872,86902.0,high,washbasin -> lavatório louça branca c/ coluna
 guarda_corpo,Commercial - Glass w Fixings,guardrail,99842,99846.0,medium,glass/panoramic guardrail -> guarda-corpo panorâmico
-fechamento_lote,PORTÃO DE METAL,,99842,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
+fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO 2,,98523,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
+fechamento_lote,Guarda-corpo - GRADIL V 200 01 PORTÃO,,98523,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"
+fechamento_lote,PORTÃO DE METAL,,101205,,gap,"metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually"

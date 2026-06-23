@@ -5,7 +5,9 @@ Deterministic by construction:
                     the same unidade (conversion_factor stays 1.0).
   2. Grupo anchor — each Revit group is restricted to its allowed SINAPI `grupo`(s), so the
                     match space is semantically bounded (e.g. forros only match "Forros"/"Gesso").
-  3. Fuzzy rank   — within that pool, rapidfuzz token_set_ratio on normalized descriptions;
+  3. Thickness anchor (alvenaria, laje_interna) — wall thickness → block width; slab thickness
+                    → SINAPI laje height bucket; narrows pool before fuzzy ranking.
+  4. Fuzzy rank   — within that pool, rapidfuzz token_set_ratio on normalized descriptions;
                     ties broken by lowest código. Same inputs -> same output, always.
 
 Output: crosswalk/revit_sinapi_map.csv — the version-controlled source of truth. Low-confidence
@@ -23,7 +25,7 @@ from textnorm import normalize
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-OUT = ROOT / "crosswalk" / "revit_sinapi_map.csv"
+OUT  = ROOT / "crosswalk" / "revit_sinapi_map.csv"
 
 TOPK = 5
 HIGH, MED = 72, 55  # token_set_ratio thresholds
@@ -31,15 +33,19 @@ HIGH, MED = 72, 55  # token_set_ratio thresholds
 # Each Revit group -> allowed SINAPI grupo(s). Bounds the match space deterministically.
 GROUP_RULES = {
     "paredes_alvenaria": ["Alvenaria de Vedação"],
+    "divisoria_leve":    ["Instalações de Divisórias Diversas", "Paredes em Drywall"],
     "forro":             ["Forros", "Gesso"],
     "cobertura":         ["Telhamento para Cobertura", "Estrutura e Trama para Cobertura"],
-    "drenagem":          ["Instalações Prediais de Águas Pluviais - Tubos, Conexões, Caixas e Ralos"],
+    "drenagem":          ["Telhamento para Cobertura"],
     "porta":             ["Esquadrias - Portas"],
     "janela":            ["Esquadrias - Janelas"],
+    "vidro_fachada":     ["Pele de Vidro em Fachadas", "Vidros e Espelhos"],
     "louca_sanitaria":   ["Louças e Metais"],
     "guarda_corpo":      ["Guarda-Corpo, Corrimão e Grade para Esquadrias"],
-    "fechamento_lote":   ["Guarda-Corpo, Corrimão e Grade para Esquadrias"],  # gradil/portão; review
-    "piso_interno":      ["Pisos", "Revestimentos Cerâmicos Internos", "Contrapiso"],
+    "fechamento_lote":   ["Cercas, Protetores e Alambrados"],
+    "piso_interno":      ["Pisos", "Revestimentos Cerâmicos Internos"],
+    "contrapiso":        ["Contrapiso"],
+    "laje_interna":      ["Lajes Pré-Moldadas", "Radier, Piso de Concreto e Laje sobre Solo"],
     "rampa_escada":      ["Escadas", "Acessibilidade"],
 }
 
@@ -76,11 +82,30 @@ def thickness_width_cm(thickness_m):
     return "19"
 
 
+def laje_height_cm(thickness_m):
+    """Map a slab thickness (m) to the nearest SINAPI laje total height bucket (cm)."""
+    if thickness_m is None or pd.isna(thickness_m):
+        return None
+    t = round(float(thickness_m) * 100)
+    if t <= 13:  return "12"
+    if t <= 18:  return "16"
+    if t <= 22:  return "20"
+    if t <= 27:  return "25"
+    return "30"
+
+
 def main():
-    rev = pd.read_parquet(DATA / "dim_revit_type.parquet")
+    rev  = pd.read_parquet(DATA / "dim_revit_type.parquet")
     comp = pd.read_parquet(DATA / "dim_sinapi_composicao.parquet").copy()
     comp["desc_norm"] = comp["descricao"].map(normalize)
-    comp["unidade"] = comp["unidade"].astype(str).str.upper().str.strip()
+    comp["unidade"]   = comp["unidade"].astype(str).str.upper().str.strip()
+
+    # General rule (spec 6.1): never match re-installation services ("recolocação"); they
+    # are repair/reuse items, never wanted in a new-construction preliminary orçamento.
+    n_recoloca = comp["desc_norm"].str.contains("RECOLOCA", regex=False).sum()
+    comp = comp[~comp["desc_norm"].str.contains("RECOLOCA", regex=False)].reset_index(drop=True)
+    if n_recoloca:
+        print(f"excluded {n_recoloca} 'recolocação' composições from the candidate pool")
 
     rows = []
     for r in rev.itertuples(index=False):
@@ -89,8 +114,9 @@ def main():
         if grupos:
             pool = pool[pool["grupo"].isin(grupos)]
 
-        # Alvenaria: anchor on wall thickness -> block width, since the type name has no block spec.
         anchored = False
+
+        # Alvenaria: anchor on wall thickness -> block width, since type names carry only finish.
         if r.group == "paredes_alvenaria":
             width = thickness_width_cm(getattr(r, "thickness_m", None))
             if width:
@@ -98,9 +124,17 @@ def main():
                 if len(sub):
                     pool, anchored = sub, True
 
+        # Laje interna: anchor on slab thickness -> SINAPI laje height bucket.
+        if r.group == "laje_interna":
+            height = laje_height_cm(getattr(r, "thickness_m", None))
+            if height:
+                sub = pool[pool["desc_norm"].str.contains(height, regex=False)]
+                if len(sub):
+                    pool, anchored = sub, True
+
         best_code = best_desc = best_grupo = None
         score = 0
-        alts = []
+        alts  = []
         if len(pool):
             scored = [
                 (int(fuzz.token_set_ratio(r.text_norm, dn)), int(c), d, g)

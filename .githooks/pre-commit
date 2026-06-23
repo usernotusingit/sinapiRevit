@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Determinism hash gate (see tools/hash_gate.py).
+#
+# Fires only when orçamento OUTPUTS are part of the commit. Committing outputs is a
+# claim that they reproduce from the current code + crosswalk + inputs — this verifies
+# that claim and rejects the commit if they don't. Logic-only commits (no outputs
+# staged) are not gated, so day-to-day work on `logicstate` is unaffected.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+
+staged="$(git diff --cached --name-only)"
+if echo "$staged" | grep -qE '^output/(fact_orcamento|orcamento|coverage_report)'; then
+  echo "[hash-gate] orçamento outputs staged — verifying determinism..."
+  if ! python3 tools/hash_gate.py; then
+    echo ""
+    echo "[hash-gate] REJECTED: staged outputs do not reproduce from current source."
+    echo "  Fix: regenerate, e.g."
+    echo "    python3 src/parse_revit.py && python3 src/build_crosswalk.py && \\"
+    echo "    python3 src/apply_review.py && for r in SD CD SE; do \\"
+    echo "      python3 src/build_orcamento.py --uf MG --regime \$r; done"
+    echo "  then 'git add output/...' and commit again — or unstage the outputs."
+    exit 1
+  fi
+fi
+exit 0

@@ -49,6 +49,8 @@ def review(group, text, role):
     if group in ("porta", "fechamento_lote"):
         if "PORTÃO" in t or "PORTAO" in t:
             return (None, "gap", "metal gate — SINAPI 106463 is per M2; current qty unit mismatch, price manually")
+        if "VIDRO" in t:
+            return (None, "gap", "glass door (porta de vidro de correr) — not in esquadrias-porta; SINAPI glass doors are hinged/temperado by size, no faithful match for large sliding panels, price as vidro/esquadria manually")
         return None
     if group == "guarda_corpo":
         if "GLASS" in t or "VIDRO" in t: return (99846, "medium", "glass/panoramic guardrail -> guarda-corpo panorâmico")
@@ -69,7 +71,11 @@ def main():
     cw = pd.read_csv(CW)
     comp = pd.read_parquet(ROOT / "data" / "dim_sinapi_composicao.parquet").set_index("codigo")
 
-    target = cw.confidence.isin(["low", "none"]) | (cw.group == "louca_sanitaria")
+    # Always evaluate louca_sanitaria (role-based) and porta/fechamento_lote (gate/glass-door
+    # routing fires on PORTÃO/VIDRO regardless of fuzzy confidence); review() returns None and
+    # leaves normal doors untouched.
+    target = cw.confidence.isin(["low", "none"]) | cw.group.isin(
+        ["louca_sanitaria", "porta", "fechamento_lote"])
     logs, changed = [], 0
     for i, r in cw[target].iterrows():
         dec = review(r.group, r.revit_text, str(r.element_role))
