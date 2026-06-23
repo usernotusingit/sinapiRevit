@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
 # Determinism hash gate (see tools/hash_gate.py).
 #
-# Fires only when orçamento OUTPUTS are part of the commit. Committing outputs is a
-# claim that they reproduce from the current code + crosswalk + inputs — this verifies
-# that claim and rejects the commit if they don't. Logic-only commits (no outputs
-# staged) are not gated, so day-to-day work on `logicstate` is unaffected.
+# The orçamento outputs are no longer committed (regenerable via `make regen`), so the
+# tracked deterministic artifact is the crosswalk: crosswalk/revit_sinapi_map.csv.
+# Committing a change to it is a claim that it reproduces from the current code +
+# inputs — this verifies that claim (and re-checks any output/ files present on disk)
+# and rejects the commit if they don't. Logic-only commits that don't touch the
+# crosswalk CSV are not gated.
 #
 # Enable once per clone:  git config core.hooksPath .githooks
 set -euo pipefail
 
 staged="$(git diff --cached --name-only)"
-if echo "$staged" | grep -qE '^output/(fact_orcamento|orcamento|coverage_report)'; then
-  echo "[hash-gate] orçamento outputs staged — verifying determinism..."
+if echo "$staged" | grep -qE '^crosswalk/revit_sinapi_map\.csv$'; then
+  echo "[hash-gate] crosswalk map staged — verifying determinism..."
   if ! python3 tools/hash_gate.py; then
     echo ""
-    echo "[hash-gate] REJECTED: staged outputs do not reproduce from current source."
-    echo "  Fix: regenerate, e.g."
-    echo "    python3 src/parse_revit.py && python3 src/build_crosswalk.py && \\"
-    echo "    python3 src/apply_review.py && for r in SD CD SE; do \\"
-    echo "      python3 src/build_orcamento.py --uf MG --regime \$r; done"
-    echo "  then 'git add output/...' and commit again — or unstage the outputs."
+    echo "[hash-gate] REJECTED: crosswalk/outputs do not reproduce from current source."
+    echo "  Fix: regenerate, then commit again:"
+    echo "    make regen   # (or run src/parse_revit.py -> build_crosswalk.py -> apply_review.py ...)"
     exit 1
   fi
 fi

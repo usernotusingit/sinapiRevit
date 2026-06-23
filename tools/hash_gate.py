@@ -1,11 +1,13 @@
-"""Determinism hash gate — verify committed orçamento outputs reproduce from source.
+"""Determinism hash gate — verify orçamento outputs reproduce from source.
 
 The pipeline is deterministic by contract: same code + same crosswalk + same SINAPI
 month + same (uf, regime) => byte-identical output (build_orcamento asserts a SHA-256).
-This gate enforces that contract at commit time: it rebuilds the whole pipeline from the
-local raw inputs in a throwaway temp dir and checks that each regenerated
-`fact_orcamento_<UF>_<REGIME>` matches the committed one (by the same content hash
-build_orcamento uses) — and that the crosswalk CSV matches too.
+This gate enforces that contract: it rebuilds the whole pipeline from the local raw
+inputs in a throwaway temp dir and checks that the crosswalk CSV (the tracked
+deterministic artifact) matches, plus any regenerated `fact_orcamento_<UF>_<REGIME>`
+that is present in output/ on disk (by the same content hash build_orcamento uses).
+Outputs are gitignored and regenerated via `make regen`, so the crosswalk match is the
+primary committed guarantee; the output checks act as a determinism self-test.
 
 Because the raw inputs (revit_model_summary.json, the SINAPI tables under data/) are
 gitignored, this can only run where those inputs are present. If they're missing it
@@ -120,9 +122,9 @@ def main(argv):
             print(f"  {'OK ' if match else 'DRIFT'}  {rel}")
 
         if not ok:
-            print("[hash-gate] DRIFT: committed outputs do not reproduce from current source.")
+            print("[hash-gate] DRIFT: crosswalk/outputs do not reproduce from current source.")
             return 1
-        print("[hash-gate] PASS: all committed outputs reproduce deterministically.")
+        print("[hash-gate] PASS: crosswalk + local outputs reproduce deterministically.")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

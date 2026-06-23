@@ -4,6 +4,11 @@ extracted/
 revit_model_summary.json
 # derived data (regenerate via parse scripts)
 data/
+# regenerable pipeline outputs — reproduce deterministically via `make regen`
+# (the hash gate proves they rebuild byte-for-byte, so they don't live in git)
+output/fact_orcamento_*.parquet
+output/orcamento_*.xlsx
+output/coverage_report_*.md
 # python
 .venv/
 __pycache__/
