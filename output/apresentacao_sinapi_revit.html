@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orçamento automatizado SINAPI × Revit — CÂMARA MUNICIPAL</title>
+<style>
+  :root{
+    --bg:#0e1726; --bg2:#13203a; --card:#1b2a48; --ink:#eaf0fb; --muted:#9fb2d4;
+    --accent:#4f9cf9; --accent2:#37d39b; --warn:#f7b955; --bad:#f2698a; --line:#2b3d63;
+    --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:6vh 8vw;animation:fade .35s ease}
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .kicker{color:var(--accent);font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    font-size:.8rem;margin-bottom:1rem}
+  h1{font-size:3.2rem;line-height:1.08;margin-bottom:1.2rem;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:2.2rem;line-height:1.12;margin-bottom:1.6rem;font-weight:800;letter-spacing:-.01em}
+  h2 .u{color:var(--accent2)}
+  p{font-size:1.25rem;color:var(--muted);line-height:1.55;max-width:60ch}
+  .lead{font-size:1.5rem;color:var(--ink);max-width:70ch}
+  ul{list-style:none;margin-top:.6rem}
+  li{font-size:1.2rem;color:var(--ink);line-height:1.5;padding:.45rem 0 .45rem 1.8rem;position:relative;max-width:74ch}
+  li::before{content:"▸";position:absolute;left:0;color:var(--accent)}
+  li small{display:block;color:var(--muted);font-size:.98rem;margin-top:.15rem}
+  .grid{display:grid;gap:1.1rem;margin-top:1rem}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem 1.6rem}
+  .card h3{font-size:1.05rem;color:var(--accent);margin-bottom:.5rem;font-weight:700}
+  .card p{font-size:1.05rem;color:var(--ink)}
+  .big{font-size:2.6rem;font-weight:800;letter-spacing:-.02em}
+  .big.green{color:var(--accent2)}.big.blue{color:var(--accent)}
+  .sub{color:var(--muted);font-size:.95rem;margin-top:.2rem}
+  .flow{display:flex;align-items:stretch;gap:.7rem;flex-wrap:wrap;margin-top:1.2rem}
+  .step{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;flex:1;min-width:150px}
+  .step .n{color:var(--accent);font-family:var(--mono);font-weight:700}
+  .step b{display:block;margin:.3rem 0 .25rem;font-size:1.05rem}
+  .step small{color:var(--muted);font-size:.85rem;line-height:1.35;display:block}
+  .arrow{align-self:center;color:var(--accent);font-size:1.4rem}
+  .bridge{display:flex;align-items:center;gap:1rem;margin-top:1.4rem;flex-wrap:wrap}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;text-align:center;min-width:160px}
+  .node.rev{border-color:var(--accent)}.node.sin{border-color:var(--accent2)}
+  .node.key{border-color:var(--warn);background:#241d10}
+  .node b{font-size:1.05rem}.node small{display:block;color:var(--muted);margin-top:.25rem;font-size:.85rem}
+  .link{color:var(--warn);font-size:1.6rem}
+  table{border-collapse:collapse;margin-top:.8rem;font-size:1.1rem;width:100%;max-width:760px}
+  th,td{text-align:left;padding:.55rem .9rem;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:.9rem;text-transform:uppercase;letter-spacing:.05em}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+  .pill{display:inline-block;padding:.2rem .7rem;border-radius:999px;font-size:.85rem;font-weight:700}
+  .p-high{background:#10331f;color:var(--accent2)}.p-med{background:#102a4d;color:var(--accent)}
+  .p-low{background:#3a2e12;color:var(--warn)}.p-gap{background:#3a1622;color:var(--bad)}
+  .bar{height:14px;border-radius:8px;background:var(--line);overflow:hidden;display:flex;margin-top:1rem;max-width:760px}
+  .bar span{display:block;height:100%}
+  .meta{position:absolute;bottom:3.5vh;left:8vw;right:8vw;display:flex;justify-content:space-between;
+    color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:.8rem}
+  .meta .mono{font-family:var(--mono)}
+  .nav{position:fixed;bottom:3vh;right:3vw;display:flex;gap:.5rem;z-index:10}
+  .nav button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    width:42px;height:42px;font-size:1.2rem;cursor:pointer}
+  .nav button:hover{border-color:var(--accent)}
+  .count{position:fixed;top:3vh;right:3vw;color:var(--muted);font-family:var(--mono);font-size:.9rem;z-index:10}
+  .cover{justify-content:flex-end}
+  .cover .tag{display:inline-flex;gap:.6rem;align-items:center;color:var(--muted);font-size:1rem;margin-top:1.4rem}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--accent2)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;align-items:start}
+  .note{margin-top:1.2rem;color:var(--muted);font-size:1rem;border-left:3px solid var(--accent);padding-left:1rem;max-width:70ch}
+</style>
+</head>
+<body>
+<div class="count" id="count">01 / 10</div>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active cover">
+    <div class="kicker">Estimativa de custos a partir do BIM</div>
+    <h1>Orçamento automatizado<br><span style="color:var(--accent)">SINAPI × Revit</span></h1>
+    <p class="lead">Da modelagem Revit ao custo de obra: um pipeline determinístico que liga o
+    levantamento de quantitativos do projeto à tabela de custos oficial SINAPI.</p>
+    <div class="tag"><span class="dot"></span> Projeto <b style="color:var(--ink)">CÂMARA MUNICIPAL</b> &nbsp;·&nbsp; SINAPI 2026-05 &nbsp;·&nbsp; Localidade: Minas Gerais (MG)</div>
+    <div class="meta"><span>Apresentação técnica da análise</span><span class="mono">github.com/usernotusingit/sinapiRevit</span></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">O problema</div>
+    <h2>Dois mundos sem <span class="u">chave em comum</span></h2>
+    <p class="lead">O modelo Revit descreve <b style="color:var(--ink)">o que</b> existe (paredes, pisos, esquadrias).
+    O SINAPI descreve <b style="color:var(--ink)">quanto custa</b>. Mas não há chave natural entre eles.</p>
+    <ul>
+      <li>No Revit, o nome do tipo é <b>texto livre</b> do projetista — “Parede básica - int - ARRIMO (---- / TINTA)”.
+        <small>Carrega o acabamento, não a especificação do bloco nem um código.</small></li>
+      <li>No SINAPI, cada item é um <b>código de catálogo do governo</b> — disjunto do Revit.
+        <small>Sem chave estrangeira, sem campo compartilhado para um JOIN direto.</small></li>
+    </ul>
+    <div class="note">A pergunta central não é “qual fórmula?”, e sim “como construir a relação lógica
+    entre os dois relatórios de forma confiável e auditável?”.</div>
+    <div class="meta"><span>O desafio</span><span class="mono">186 tipos Revit × 10.413 composições SINAPI</span></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">Os dados</div>
+    <h2>O que entra no <span class="u">pipeline</span></h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Revit — resumo do modelo (JSON)</h3>
+        <p>Levantamento de quantitativos do projeto, agrupado por tipo e material, com a medida de cada elemento.</p>
+        <table>
+          <tr><td>Tipos distintos</td><td class="r">186</td></tr>
+          <tr><td>Paredes / vedação</td><td class="r">6.161 m²</td></tr>
+          <tr><td>Acabamentos (pisos, forros, pintura)</td><td class="r">11.468 m²</td></tr>
+          <tr><td>Cobertura</td><td class="r">2.556 m²</td></tr>
+          <tr><td>Esquadrias (portas + janelas)</td><td class="r">229 un</td></tr>
+          <tr><td>Louças sanitárias</td><td class="r">234 un</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>SINAPI 2026-05 (XLSX)</h3>
+        <p>Tabela oficial de custos: composições (serviços) e insumos, por estado e regime tributário.</p>
+        <table>
+          <tr><td>Composições</td><td class="r">10.413</td></tr>
+          <tr><td>Insumos</td><td class="r">4.876</td></tr>
+          <tr><td>Estados (UF)</td><td class="r">27</td></tr>
+          <tr><td>Regimes</td><td class="r">SD · CD · SE</td></tr>
+          <tr><td>Preços (composição × UF × regime)</td><td class="r">843 mil</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="meta"><span>Fontes de dados</span><span class="mono">revit_model_summary.json · SINAPI_Referência_2026_05.xlsx</span></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">A solução</div>
+    <h2>Uma <span class="u">ponte dimensional</span> congelada</h2>
+    <p class="lead">Como não existe chave natural, ela é <b style="color:var(--ink)">fabricada</b>: uma dimensão-ponte
+    (crosswalk) construída uma vez, revisada e congelada. O custo passa a ser um JOIN puro.</p>
+    <div class="bridge">
+      <div class="node rev"><b>dim_revit_type</b><small>tipo + material + medida</small></div>
+      <span class="link">→</span>
+      <div class="node key"><b>crosswalk</b><small>ponte revisável<br>(a chave manufaturada)</small></div>
+      <span class="link">→</span>
+      <div class="node sin"><b>dim_sinapi_composicao</b><small>código + custo por UF/regime</small></div>
+    </div>
+    <div class="note">Toda decisão de correspondência fica na ponte. O motor de custo (fato) é apenas
+    <b>quantidade × custo unitário</b> — um JOIN determinístico em DuckDB.</div>
+    <div class="meta"><span>Modelo estrela (star schema)</span><span class="mono">map_revit_to_sinapi → fact_orcamento</span></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">Como funciona</div>
+    <h2>Pipeline em <span class="u">5 estágios</span></h2>
+    <div class="flow">
+      <div class="step"><span class="n">01</span><b>Parse SINAPI</b><small>Limpa o XLSX (cabeçalhos multilinha, código em fórmula) → tabelas tidy.</small></div>
+      <span class="arrow">→</span>
+      <div class="step"><span class="n">02</span><b>Parse Revit</b><small>Achata o JSON em tipos distintos + quantitativos, com normalização de texto.</small></div>
+      <span class="arrow">→</span>
+      <div class="step"><span class="n">03</span><b>Crosswalk</b><small>Constrói a ponte: filtro de unidade, âncora de grupo, espessura, fuzzy.</small></div>
+      <span class="arrow">→</span>
+      <div class="step"><span class="n">04</span><b>Orçamento</b><small>JOIN determinístico (UF, regime) → planilha de custos.</small></div>
+      <span class="arrow">→</span>
+      <div class="step"><span class="n">05</span><b>Cobertura</b><small>Relatório de confiança, lacunas e itens a revisar.</small></div>
+    </div>
+    <div class="note">Mesmo modelo + mesma ponte + mesmo mês SINAPI ⇒ resultado <b>idêntico bit a bit</b>
+    (verificado por hash). Nenhum LLM no caminho de execução.</div>
+    <div class="meta"><span>Tecnologia</span><span class="mono">Python · pandas · DuckDB · rapidfuzz</span></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">Correspondência</div>
+    <h2>Determinismo por <span class="u">construção</span></h2>
+    <ul>
+      <li><b>Trava de unidade</b> — um tipo medido em m²/m/un só pode casar com composições da mesma unidade.
+        <small>Impede erros grosseiros (ex.: janela em m² nunca casa com item em unidade).</small></li>
+      <li><b>Âncora de grupo</b> — cada grupo Revit é restrito ao(s) grupo(s) SINAPI cabível(is).
+        <small>Forros só casam com “Forros/Gesso”; cobertura com “Telhamento”; e assim por diante.</small></li>
+      <li><b>Âncora de espessura</b> (alvenaria) — a espessura da parede define a largura do bloco (9/14/19 cm).
+        <small>Necessária porque o nome da parede traz só o acabamento, não o bloco.</small></li>
+      <li><b>Ranqueamento fuzzy</b> — similaridade textual dentro do conjunto já delimitado; empate pelo menor código.
+        <small>Espaço de busca pequeno e semântico ⇒ correspondência estável.</small></li>
+    </ul>
+    <div class="meta"><span>4 camadas + revisão</span><span class="mono">unit gate → grupo → thickness → fuzzy</span></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">Uso de IA</div>
+    <h2>Onde o <span class="u">LLM</span> entrou — e onde não</h2>
+    <div class="two">
+      <div>
+        <p class="lead" style="font-size:1.25rem">O LLM foi usado <b style="color:var(--ink)">uma vez, offline</b>, só para
+        resolver os ~41 tipos sinalizados pelo fuzzy: escolher o código SINAPI correto entre os candidatos
+        pré-selecionados de cada tipo (ou marcar lacuna).</p>
+        <div class="note" style="border-color:var(--accent2)">As decisões viram <b>dados estáticos</b>
+        (<span class="mono">apply_review.py</span> + <span class="mono">review_log.csv</span>), com justificativa por linha.
+        O JOIN de custo <b>nunca</b> chama LLM.</div>
+      </div>
+      <div class="card">
+        <h3>Premissas explícitas (proxies)</h3>
+        <ul style="margin:0">
+          <li>Vaso sanitário → bacia com caixa acoplada<small>padrão para edifício público</small></li>
+          <li>Parede pintada → látex acrílica, 2 demãos</li>
+          <li>Piso cerâmico 40×40 → esmaltado 45×45<small>dimensão mais próxima disponível</small></li>
+          <li>Guarda-corpo de vidro → painel panorâmico</li>
+        </ul>
+      </div>
+    </div>
+    <div class="meta"><span>IA isolada e auditável</span><span class="mono">41 revisões registradas · 0 no runtime</span></div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">Resultados</div>
+    <h2>Orçamento — <span class="u">Minas Gerais</span></h2>
+    <div class="grid g2" style="margin-bottom:.4rem">
+      <div class="card"><h3>Sem Desoneração (SD)</h3><div class="big green">R$ 1.832.530,69</div><div class="sub">186 itens · 12 lacunas precificadas à parte</div></div>
+      <div class="card"><h3>Com Desoneração (CD)</h3><div class="big blue">R$ 1.802.493,73</div><div class="sub">mesma ponte; muda apenas o custo</div></div>
+    </div>
+    <div class="two" style="margin-top:.4rem">
+      <table>
+        <tr><th>Capítulo</th><th class="r">R$ (SD)</th></tr>
+        <tr><td>Vedações</td><td class="r">602.261,76</td></tr>
+        <tr><td>Cobertura</td><td class="r">435.982,15</td></tr>
+        <tr><td>Acabamentos</td><td class="r">402.055,94</td></tr>
+        <tr><td>Esquadrias</td><td class="r">142.145,88</td></tr>
+        <tr><td>Circulação</td><td class="r">135.993,58</td></tr>
+        <tr><td>Hidrossanitário</td><td class="r">114.091,38</td></tr>
+      </table>
+      <div>
+        <p style="font-size:1.05rem">Distribuição por confiança da correspondência:</p>
+        <div class="bar">
+          <span style="width:25%;background:var(--accent2)" title="alta"></span>
+          <span style="width:71%;background:var(--accent)" title="média"></span>
+          <span style="width:2.4%;background:var(--warn)" title="baixa"></span>
+          <span style="width:1.6%;background:var(--bad)" title="lacuna"></span>
+        </div>
+        <p style="margin-top:.9rem;font-size:1rem">
+          <span class="pill p-high">45 alta</span>
+          <span class="pill p-med">125 média</span>
+          <span class="pill p-low">4 baixa</span>
+          <span class="pill p-gap">12 lacuna</span>
+        </p>
+        <p style="margin-top:.8rem;font-size:1rem">Apenas <b style="color:var(--ink)">~2,4%</b> do total
+        repousa sobre correspondências de baixa confiança.</p>
+      </div>
+    </div>
+    <div class="meta"><span>SINAPI 2026-05 · MG</span><span class="mono">hash determinístico verificado</span></div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="kicker">Honestidade técnica</div>
+    <h2>Lacunas e <span class="u">limitações</span></h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>12 lacunas — precificar manualmente</h3>
+        <ul style="margin:0">
+          <li>Calha de cobertura<small>SINAPI 2026-05 não traz composição de calha</small></li>
+          <li>Portões metálicos<small>existe só por m² (106463); quantidade em metro</small></li>
+          <li>Divisórias de granito / naval, pele de vidro, laje aparente</li>
+        </ul>
+        <p class="sub" style="margin-top:.7rem">Excluídas do total — sinalizadas, nunca “chutadas”.</p>
+      </div>
+      <div class="card">
+        <h3>Premissas estruturais do modelo</h3>
+        <ul style="margin:0">
+          <li>Alvenaria ancorada na <b>espessura</b>, não na especificação do bloco</li>
+          <li>Área de acabamento de parede = uma face calculada<small>verificar se devem ser as duas faces</small></li>
+          <li>Elementos estruturais não modelados neste projeto</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note">A planilha herda os indicadores de confiança e <span class="mono">quantity_status</span> do
+    modelo — números “moles” permanecem visíveis para revisão.</div>
+    <div class="meta"><span>Tudo rastreável</span><span class="mono">coverage_report · review_log.csv</span></div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="kicker">Conclusão</div>
+    <h2>Um orçamento <span class="u">reproduzível e revisável</span></h2>
+    <div class="grid g3">
+      <div class="card"><h3>Determinístico</h3><p>Mesmas entradas ⇒ mesmo resultado, sempre. Zero oscilação no custo.</p></div>
+      <div class="card"><h3>Auditável</h3><p>Cada correspondência e premissa registrada e editável na ponte.</p></div>
+      <div class="card"><h3>Parametrizável</h3><p>Troca de UF e regime sem refazer o mapeamento.</p></div>
+    </div>
+    <h3 style="color:var(--accent);margin:1.6rem 0 .6rem;font-size:1.1rem">Próximos passos sugeridos</h3>
+    <ul>
+      <li>Revisar a ponte (<span class="mono">revit_sinapi_map.csv</span>): blocos de alvenaria e dupla face de pintura.</li>
+      <li>Precificar manualmente as 12 lacunas e reintegrá-las ao total.</li>
+      <li>Estender o escopo (instalações, estrutura) conforme o modelo evoluir.</li>
+    </ul>
+    <div class="meta"><span>Entregáveis no Dropbox · /sinapi + revit/resultados</span><span class="mono">github.com/usernotusingit/sinapiRevit</span></div>
+  </section>
+
+</div>
+
+<div class="nav"><button id="prev">‹</button><button id="next">›</button></div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0; const cnt=document.getElementById('count');
+  const pad=n=>String(n).padStart(2,'0');
+  function show(n){i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    cnt.textContent=pad(i+1)+' / '+pad(slides.length);}
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key))show(i+1);
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key))show(i-1);
+    if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+  });
+  show(0);
+</script>
+</body>
+</html>
