@@ -6,13 +6,14 @@ PY      ?= python3
 UF      ?= MG
 REGIMES ?= SD CD SE
 
-.PHONY: regen verify clean help hooks
+.PHONY: regen verify clean help hooks stamp-spec
 
 help:
-	@echo "make regen   - rebuild crosswalk + all orçamento outputs ($(UF): $(REGIMES))"
-	@echo "make verify  - assert outputs reproduce deterministically (hash gate)"
-	@echo "make clean   - delete regenerable outputs from output/"
-	@echo "make hooks   - point git at .githooks (auto-run by regen/verify)"
+	@echo "make regen      - rebuild crosswalk + all orçamento outputs ($(UF): $(REGIMES))"
+	@echo "make verify     - assert determinism (hash gate) + spec freshness (spec gate)"
+	@echo "make stamp-spec - re-record params.md's fingerprint into the spec snapshot"
+	@echo "make clean      - delete regenerable outputs from output/"
+	@echo "make hooks      - point git at .githooks (auto-run by regen/verify)"
 
 # Activate the determinism pre-commit hook. Git won't auto-install committed hooks
 # (security), so we wire it on the first regen/verify in any clone — idempotent.
@@ -34,6 +35,14 @@ regen: hooks
 
 verify: hooks
 	$(PY) tools/hash_gate.py
+	$(PY) tools/spec_gate.py
+
+# Re-record sha256(crosswalk/params.md) into params_spec_system_prompt.{json,md}.
+# Run AFTER refreshing the spec snapshot + gap docs to match a new params.md — this
+# turns the freshness gate green again. The content refresh is editorial; the stamp
+# just records that it was done.
+stamp-spec:
+	$(PY) tools/spec_gate.py --stamp
 
 clean:
 	rm -f output/fact_orcamento_*.parquet output/orcamento_*.xlsx output/coverage_report_*.md

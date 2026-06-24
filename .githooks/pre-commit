@@ -22,4 +22,17 @@ if echo "$staged" | grep -qE '^crosswalk/revit_sinapi_map\.csv$'; then
     exit 1
   fi
 fi
+
+# Spec freshness: if params.md or its snapshot is staged, the snapshot's recorded
+# fingerprint must match the current params.md (see tools/spec_gate.py).
+if echo "$staged" | grep -qE '^crosswalk/(params\.md|params_spec_system_prompt\.(json|md))$'; then
+  echo "[spec-gate] params.md / spec snapshot staged — verifying freshness..."
+  if ! python3 tools/spec_gate.py; then
+    echo ""
+    echo "[spec-gate] REJECTED: the params_spec snapshot is stale vs crosswalk/params.md."
+    echo "  Fix: refresh the snapshot + gap docs to match params.md, then re-stamp:"
+    echo "    make stamp-spec"
+    exit 1
+  fi
+fi
 exit 0

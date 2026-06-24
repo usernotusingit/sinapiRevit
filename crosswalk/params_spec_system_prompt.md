@@ -7,7 +7,9 @@
 | name | `previa-params-spec` |
 | model | `claude-opus-4-8` |
 | version | `2026-06-23` |
-| source | `/root/ideas/params.md` |
+| source | `crosswalk/params.md` |
+| source_sha256 | `0d9e06e24c84af8b74c0821335db67d09f071c326af5338189e9d443fa43bc00` |
+| source_synced | `2026-06-24` |
 
 ---
 
