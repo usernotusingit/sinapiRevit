@@ -7,8 +7,13 @@ Section-by-section comparison of the two governing system prompts:
   `parse_sinapi.py`, `parse_revit.py`, `build_crosswalk.py`, `apply_review.py`, `build_orcamento.py`)
 
 The spec is treated as the requirement (what should be true); the code prompt as what is true.
-This is a **superset** of `docs/spec-gaps.md` (which listed only the five "real divergences");
-notable additions surfaced here are the contrapiso m³ unit mismatch and the 7.3-calhas abandonment.
+This is a **superset** of `docs/spec-gaps.md` (which lists only the "real divergences").
+
+**Resolved since (issue #1, 2026-06-23)** — folded into the code, no longer gaps: §B 7.3 calhas
+(now matches 94227, was "always gap"); §C 6.1/6.2 portas/janelas (now structured `rule+dim`
+anchors). Also encoded this cycle but outside the original gap list: the never-priced-composição
+pool filter, the divisória/dry-wall double-count fix, and the fixture-identity louça review. The
+still-open contrapiso m³ unit mismatch (§B) remains the notable R$-moving divergence.
 
 Refreshed against the **"Mestrado - June 22, 5:30 PM"** spec revision: that revision adds the
 EAP work-breakdown (§H below — the largest new gap), category 6.4 (componentes/acessórios), the
@@ -31,19 +36,22 @@ ceiling branch of 8.2, and an explicit *incluir arrimo* instruction on 5.1.
   not just the match.
 - **7.2 Telhamento — no slope adjustment** — spec calls for **adjusted** area (`plan / cos(slope)`);
   code's `cobertura` uses raw `total_area_m2`, `conversion_factor = 1.0`.
-- **7.3 Calhas — spec wants a match, code gives up** — spec defines a real join
+- **7.3 Calhas — ✅ RESOLVED (issue #1, 2026-06-23)** — spec defines a real join
   (`'calha' + material + altura`, grupo "Telhamento para cobertura", `cost/m × length`); code's
-  `drenagem` review marks it **always `gap`** ("no calha composição in 2026-05"). Capability exists
-  in spec, abandoned in code.
+  `drenagem` review now matches `CALHA`→**94227** high (calha em chapa de aço galvanizado nº24),
+  falling back to `gap` only for other roof-drainage elements still unpriced in 2026-05. The
+  altura dimension is not yet a structured key (still fuzzy within the single calha composição).
 - **8.5 Pintura folded into revestimento** — spec treats pintura as its own category with a sequence
   (sanding → primer → putty → paint); code collapses it into `parede_revestimento` (TINTA→104642).
   No multi-step sequence.
 
 ## C. Join-key fidelity gaps (matched, but on weaker keys)
 
-- **6.1 Portas / 6.2 Janelas** — spec join keys are *tipo de abertura* and *número de folhas*
-  (structured); code only fuzzy-matches the name string (plus a few frozen review picks like
-  OCULO→100674). No structured opening anchor analogous to the thickness anchor.
+- **6.1 Portas / 6.2 Janelas — ✅ RESOLVED (issue #1, 2026-06-23)** — spec join keys are *tipo de
+  abertura* and *número de folhas*. Code now parses them into structured `rule+dim` anchors
+  (`door_width()` snaps to nearest catalogued width ×210 on the raw descrição; `janela_opening()`
+  → opening type, glass-included preference, then `janela_folhas()` leaf count) before fuzzy
+  ranking — the thickness-anchor analogue. OCULO→100674 remains as a frozen review pick.
 - **5.1 Vedações** — spec key is `segmento + material + espessura`; code anchors on thickness
   (block width) + fuzzy, with no explicit *segmento* dimension.
 - **8.3 Forros** — spec note: also extract **perimeter** for edge finishing; code extracts area only.

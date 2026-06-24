@@ -1,6 +1,6 @@
 # Spec gaps — `params.md` vs. crosswalk implementation
 
-Divergences between the PrevIA BIM↔SINAPI matching spec (`/root/ideas/params.md`)
+Divergences between the PrevIA BIM↔SINAPI matching spec (`crosswalk/params.md`)
 and the current pipeline (`src/parse_revit.py`, `src/build_crosswalk.py`,
 `src/build_orcamento.py`). Scope here is the **real divergences only** — places where
 the spec asks for something and the code is silent. Items the spec *itself* leaves
@@ -43,18 +43,17 @@ on the **derived-quantity** and **geometric-adjustment** frontier.
 - **Where to add:** subtract door/window `area_m2` (aggregated per wall/level) from wall
   area during the `parse_revit.py` aggregation.
 
-## 4. Opening join-keys not extracted as structured keys (6.1, 6.2)
+## 4. Opening join-keys not extracted as structured keys (6.1, 6.2) — ✅ RESOLVED (issue #1, 2026-06-23)
 
 - **Spec:** §6.1 portas join on *tipo de abertura* (from name); §6.2 janelas join on
   *tipo de abertura + número de folhas*.
-- **Code:** both collapse to generic `rapidfuzz.token_set_ratio` over the descriptor
-  string. The opening type / leaf count only help insofar as those words happen to appear
-  in the SINAPI description; they are not parsed into structured anchors.
-- **Impact:** weaker, less deterministic matches for doors/windows; no anchor narrowing
-  like alvenaria/laje get from thickness.
-- **Where to add:** parse opening type and leaf count from the Revit name in
-  `parse_revit.py`; add an anchor pass in `build_crosswalk.py` analogous to
-  `thickness_width_cm` that filters the pool before fuzzy ranking.
+- **Was:** both collapsed to generic `rapidfuzz.token_set_ratio` over the descriptor string.
+- **Now built:** `build_crosswalk.py` has a structured attribute-anchor pass (gate 3) for both
+  groups — `door_width()` snaps the Revit WxH to the nearest catalogued SINAPI width
+  {60,70,80,90,100}×210 (matched on the RAW descrição, since `normalize()` strips dimensions);
+  `janela_opening()` anchors on opening type first (MAXIM/BASCULANT/FIXO/CORRER), prefers
+  glass-included variants, then narrows by `janela_folhas()` leaf count. Both set
+  `match_method='rule+dim'`, exactly the thickness-anchor analogue this item asked for.
 
 ## 5. `muro de arrimo` guard absent (Group 2 conditional)
 
@@ -68,7 +67,10 @@ on the **derived-quantity** and **geometric-adjustment** frontier.
 - **Where to add:** when/if an `arrimo` group is introduced, gate it on explicit contention
   tokens in the name and exclude ambiguous plain-wall types.
 
-## Related
+## Status
 
+- **Open:** #1 (vergas/contravergas + encunhamento), #2 (roof slope), #3 (opening-area
+  reduction), #5 (arrimo guard, latent).
+- **Resolved (issue #1, 2026-06-23):** #4 opening join-keys — now structured `rule+dim` anchors.
+- Items #2 and #3 are the two still-open gaps that materially change R$ totals.
 - Tracked under the "crosswalk parameter tuning" future-work note.
-- Items #2 and #3 are the two that materially change R$ totals.

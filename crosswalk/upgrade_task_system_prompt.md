@@ -1,6 +1,6 @@
 # previa-crosswalk-upgrade
 
-> Task system prompt that bootstraps and drives the Revit<->SINAPI crosswalk MATCHING UPGRADE (1->1 data-matching quality). Operational layer: consumes the spec prompt (params_spec_system_prompt), the code prompt (crosswalk_logic_system_prompt), the gap analysis (docs/conceptual_gaps.md) and the human validation (docs/secondactreview.md), and works a prioritized backlog as small deterministic changes. The EAP 1->many decomposition is OUT OF SCOPE.
+> Task system prompt that bootstraps and drives the Revit<->SINAPI crosswalk MATCHING UPGRADE (1->1 data-matching quality). Operational layer: consumes the spec prompt (params_spec_system_prompt), the code prompt (crosswalk_logic_system_prompt), the gap analysis (docs/conceptual_gaps.md) and the human validation (docs/wave4-review-evidence.md), and works a prioritized backlog as small deterministic changes. The EAP 1->many decomposition is OUT OF SCOPE.
 
 | field | value |
 |---|---|
@@ -19,7 +19,7 @@ Close the gap between what the spec requires and what the code does, ONE matchin
 - crosswalk/params_spec_system_prompt.(json|md) — the SPEC layer (what should be true).
 - crosswalk/crosswalk_logic_system_prompt.(json|md) — the CODE layer (what is true): the 4 gates, GROUP_SPECS, GROUP_RULES, revestimento_grupos, thickness buckets, thresholds, review() decisions.
 - docs/conceptual_gaps.md — the spec-vs-code delta, sections A-H.
-- docs/secondactreview.md — the human validation pass over orcamento_MG_CD (observacao column): the row-level evidence of real defects.
+- docs/wave4-review-evidence.md — the human validation pass over orcamento_MG_CD (observacao column): the row-level evidence of real defects.
 - Live artifacts: crosswalk/revit_sinapi_map.csv, crosswalk/review_log.csv, output/coverage_report_<UF>_<REGIME>.md, data/dim_sinapi_composicao.parquet, data/fact_revit_quantity.parquet.
 
 ## 2. HARD INVARIANTS (never break)
@@ -34,7 +34,7 @@ Close the gap between what the spec requires and what the code does, ONE matchin
 IN SCOPE (this upgrade): improving the 1->1 match — grupo routing, thickness/opening anchors, fuzzy thresholds, review() decisions, per-group extraction filters and quantity/unit fixes, and adding missing single-match groups. Make the matching from both files tighter and better-covered.
 OUT OF SCOPE (do NOT start now): the EAP 1->many service decomposition (conceptual_gaps.md sec H) — expanding one element into a bill of services, per-service conversion factors, and structural (estrutural EAP) extraction. These change the crosswalk's output cardinality and are a separate redesign; leave them documented, untouched.
 
-## 4. PRIORITIZED BACKLOG (cross-referenced: secondactreview observacoes x conceptual_gaps)
+## 4. PRIORITIZED BACKLOG (cross-referenced: wave4-review-evidence observacoes x conceptual_gaps)
 DONE (2026-06-23, issue #1 "listed_changes" — all P0 + P1 items, encoded as deterministic design-time rules; determinism re-asserted, hash gate green):
   - [P0] Pele de vidro routing — RESOLVED earlier; verified curtain wall now routes to vidro_fachada (FACHADA CORTINA EM VIDRO), excluded from paredes_alvenaria + parede_revestimento.
   - [P1] Door nearest-size — `build_crosswalk.door_width()` parses the Revit WxH and snaps to the nearest catalogued SINAPI width {60,70,80,90,100}×210, anchored on the RAW descrição (normalize() strips dimensions, so desc_norm is size-blind). method=`rule+dim`.

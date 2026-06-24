@@ -18,9 +18,9 @@ Reads the monthly SINAPI_Referencia workbook into a star schema. Data starts at 
 
 ## 2. REVIT EXTRACTION (parse_revit.py) — GROUP_SPECS
 Flattens the Revit model summary JSON into dim_revit_type and fact_revit_quantity. Each group maps a chapter to a JSON *_types array, a quantity field, the SINAPI unit it must be priced in, and an optional row-filter:
-- paredes_alvenaria (Vedacoes) <- wall_types, total_area_m2, M2
-- divisoria_leve (Vedacoes) <- wall_finish_types where type_name contains 'divisoria', total_area_m2, M2
-- parede_revestimento (Acabamentos) <- wall_finish_types NOT containing divisoria/vidro/espelho/meio-fio, total_area_m2, M2
+- paredes_alvenaria (Vedacoes) <- wall_types where type_name is NOT vidro/cortina/divisoria/dry-wall/meio-fio (block masonry only — every non-masonry type also appears in wall_finish_types where its real group lives, so excluding it here prevents double-counting + meio-fio leak), total_area_m2, M2
+- divisoria_leve (Vedacoes) <- wall_finish_types where type_name contains 'divisoria' OR 'dry wall'/'drywall', total_area_m2, M2
+- parede_revestimento (Acabamentos) <- wall_finish_types NOT containing divisoria/dry-wall/vidro/espelho/meio-fio, total_area_m2, M2
 - piso_interno (Acabamentos) <- floor_surface_types where floor_scope=='internal_floor_finish', total_area_m2, M2
 - contrapiso (Acabamentos) <- floor_layer_types where material contains 'contrapiso', total_area_m2, M2
 - laje_interna (Estrutura) <- floor_layer_types where funcao=='estrutura', total_area_m2, M2
@@ -37,10 +37,15 @@ Flattens the Revit model summary JSON into dim_revit_type and fact_revit_quantit
 Floor elements are decomposed layer-by-layer (key = type_name x material x funcao) so contrapiso, structural laje, and the finish layer become separately priceable types, each with its own area and thickness. Wall thickness for paredes_alvenaria is the median per type_name from element-level walls (wall_types omits thickness); divisoria_leve thickness is the median total_thickness_m from wall_finish_surfaces compound layers; laje_interna thickness comes from the layer's own thickness_m. revit_type_key = group|family|type_name|material. The fuzzy-match text dedups family/type_name/material parts in order. family_name distinguishes fixtures whose type_name is only a finish/color (e.g. plumbing 'BRANCO GELO').
 
 ## 3. CROSSWALK MATCHING (build_crosswalk.py) — deterministic by construction
+Pool pre-filters (applied to the composição pool once, before any Revit type is matched): drop every composição whose desc_norm contains 'RECOLOCA' (re-installation/reuse services, never wanted in a new-construction orçamento — spec 6.1), and drop every NEVER-PRICED composição (custo_rs = 0 in every uf/regime, ~20% of the catalogue) so the fuzzy step cannot prefer an unpriced near-synonym (was sending PVC windows / drywall isolamento to R$0).
 Four ordered gates, each narrowing the candidate pool before the next:
   (1) UNIT GATE: a Revit type priced in M2/M/UN can only match SINAPI composicoes with the same unidade (keeps conversion_factor = 1.0).
   (2) GRUPO ANCHOR: each Revit group is restricted to allowed SINAPI grupo(s) (GROUP_RULES below).
-  (3) THICKNESS ANCHOR (paredes_alvenaria, laje_interna only): wall thickness -> block width token; slab thickness -> laje height bucket; filters the pool before ranking.
+  (3) ATTRIBUTE ANCHOR — narrows the pool before ranking, and sets the method label (anchor) when it fires:
+      - paredes_alvenaria: wall thickness -> block width token (whole-word match).
+      - laje_interna: slab thickness -> laje height bucket (substring match).
+      - porta: door_width() parses the Revit WxH and snaps to the nearest catalogued SINAPI width {60,70,80,90,100}; matched against the RAW descricao (regex \b<width> X 210) because normalize() strips dimensions. anchor='rule+dim'.
+      - janela: janela_opening() anchors on opening type first (MAXIM/BASCULANT/FIXO/CORRER; pivotante/fixa->FIXO, no SINAPI pivotante), then prefers glass-included variants (drops 'VIDROS NAO INCLUSOS'), then narrows by janela_folhas() leaf count if present. anchor='rule+dim'.
   (4) FUZZY RANK: rapidfuzz token_set_ratio over normalized descriptions within the pool. Sort by highest score, ties broken by LOWEST codigo. Same inputs -> same output, always. Top-5 candidates retained in a candidates column.
 GROUP_RULES (Revit group -> allowed SINAPI grupo(s)):
   paredes_alvenaria: [Alvenaria de Vedacao]
@@ -69,7 +74,7 @@ Thickness anchors:
   slab thickness_m -> laje height cm bucket: <=13 ->'12'; <=18 ->'16'; <=22 ->'20'; <=27 ->'25'; else ->'30' (substring match).
 Thresholds & labels: TOPK=5. HIGH=72, MED=55 (token_set_ratio). Assignment:
   no candidate -> method 'unmatched', confidence 'none'.
-  anchored (rule+thickness matched) -> method 'rule+thickness', confidence 'high' if score>=55 else 'medium'.
+  attribute-anchored (gate 3 fired) -> method = the anchor label ('rule+thickness' or 'rule+dim'), confidence 'high' if score>=55 else 'medium'.
   has grupo rule + score>=72 -> 'rule+fuzzy','high'.
   has grupo rule + score>=55 -> 'rule+fuzzy','medium'.
   no grupo rule + score>=80 -> 'fuzzy','medium'.
@@ -77,15 +82,16 @@ Thresholds & labels: TOPK=5. HIGH=72, MED=55 (token_set_ratio). Assignment:
 Output crosswalk/revit_sinapi_map.csv columns: revit_type_key, group, chapter, revit_text, element_role, base_unit, sinapi_codigo, sinapi_descricao, sinapi_grupo, sinapi_unidade, qty_basis, conversion_factor (=1.0), match_score, confidence, match_method, reviewed, candidates. Low/none rows are flagged for the review pass.
 
 ## 4. REVIEW PASS (apply_review.py) — design-time only, frozen into the crosswalk
-Runs once over flagged rows (confidence low/none, plus all louca_sanitaria), encoding decisions made by reading each flagged type against its shortlisted SINAPI candidates. Sets match_method='llm_review', reviewed=True, and logs every override (from_codigo, to_codigo, confidence, reason) to crosswalk/review_log.csv. A decision of codigo=None sets confidence 'gap' (codigo/descricao cleared): no reliable SINAPI match — price manually, surfaced in the coverage report rather than silently mis-priced. Encoded decisions:
+Runs over the union of (a) flagged rows (confidence low/none) and (b) all rows of the groups whose deterministic routing must fire regardless of fuzzy confidence: louca_sanitaria, porta, fechamento_lote, divisoria_leve, guarda_corpo, piso_interno, drenagem. review() returns None for rows it does not intend to touch, leaving normal matches untouched. Encodes decisions made by reading each flagged type against its shortlisted SINAPI candidates. Sets match_method='llm_review', reviewed=True, and logs every override (from_codigo, to_codigo, confidence, reason) to crosswalk/review_log.csv. A decision of codigo=None sets confidence 'gap' (codigo/descricao cleared): no reliable SINAPI match — price manually, surfaced in the coverage report rather than silently mis-priced. The decision text is matched against revit_text (which now includes family_name, so fixtures whose type_name is only a colour/finish are keyed on their real identity). Encoded decisions:
   parede_revestimento: PELE DE VIDRO->gap; GRANITO->gap; NAVAL/DIVISORIA->gap; MEIO-FIO->gap (exclude as curb); AZULEJO (and not TINTA)->87265 high; EPOXI->104642 medium; TINTA->104642 high; CARPETE->104641 low.
-  piso_interno: PORCEL or 90x90->87261 high; CERAMIC->87249 high.
+  piso_interno: BANCADA->gap (granite countertop modeled as floor — price as bancada); PORCEL or 90x90->87261 high; CERAMIC->87249 high.
+  divisoria_leve: NAVAL->gap (PVC/MDF panels unpriced in 2026-05; granite/marble divisorias stay on their fuzzy match).
   forro: GESSO->96113 high; LAJE->gap (exposed slab, no suspended ceiling).
   janela: OCULO->100674 high.
-  drenagem: always gap (no calha composicao in 2026-05).
-  porta/fechamento_lote: PORTAO->gap (106463 is per M2 — unit mismatch).
-  guarda_corpo: GLASS/VIDRO->99846 medium.
-  louca_sanitaria by element_role: toilet->86931 high; urinal->100858 high; sink INOX->86900 high; sink L83C/410->86900 medium; sink BRANCO GELO->86902 high; sink generic->86900 low.
+  drenagem: CALHA->94227 high (calha em chapa de aco galvanizado no24); else gap (other roof-drainage elements unpriced in 2026-05).
+  porta/fechamento_lote: PORTAO->gap (106463 is per M2 — unit mismatch); VIDRO->gap (large sliding glass doors have no faithful SINAPI esquadria-porta match).
+  guarda_corpo: PORTAO->gap (gate within a railing run — price separately); GLASS/VIDRO->99846 medium.
+  louca_sanitaria keyed on fixture identity (then element_role as fallback): BARRA DE APOIO->100863 high; MICTORIO or role=urinal->100858 high; BACIA/ASSENTO or role=toilet->86931 high; TANQUE->86872 high; then sinks (role=sink or CUBA/BANCADA/LAVAT/COLUNA): INOX->86900 high; L83C/410->86900 medium; BRANCO GELO->86902 high; generic->86900 low.
 
 ## 5. COSTING (build_orcamento.py)
 DuckDB relational join: fact_revit_quantity ⋈ crosswalk (revit_type_key -> sinapi_codigo, conversion_factor) ⋈ fact_sinapi_custo (codigo, uf=:uf, regime=:regime) ⋈ dim_sinapi_composicao (descricao, grupo) ⋈ dim_revit_type (type_name, material). custo_total = ROUND(quantity x conversion_factor x custo_rs, 2). Invoked per (UF, regime): default --uf MG --regime SD, regime in {SD,CD,SE}. Outputs output/orcamento_<UF>_<REGIME>.xlsx (line_items, by_chapter, by_confidence sheets) and output/fact_orcamento_<UF>_<REGIME>.parquet. Reports line-item count and missing-price count (null custo_unit), and prints a SHA-256 hash of the result asserting determinism. Missing price is reported, never hidden.
